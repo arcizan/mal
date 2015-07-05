@@ -114,6 +114,40 @@ function Seq(){
 	debug_log "ast[$REPLY]: [${ast[$REPLY]}]"
 }
 
+function car(){
+	emulate -L zsh
+
+	REPLY=${${(P)ast[${1}][1]}:-$nil}
+}
+
+function cdr(){
+	emulate -L zsh
+
+	List "${(@P)ast[${1}][2,-1]}"
+}
+
+function add_to_seq(){
+	emulate -L zsh
+
+	eval "${ast[${1}]}+=( ${(q)@[2,-1]} )"
+	REPLY=$1
+}
+
+function map(){
+	emulate -L zsh
+
+	Seq "${1%%_*}"
+	local new_seq=$REPLY seq=${ast[${1}]} f=$2 v
+	shift 2
+
+	for v in "${(@P)seq}"; do
+		eval "${f%%@*} ${(q)v} ${(q)@}" || { REPLY=; return 1; }
+		add_to_seq "$new_seq" "$REPLY"
+	done
+
+	REPLY=$new_seq
+}
+
 function List(){
 	emulate -L zsh
 
@@ -145,6 +179,35 @@ function Hash(){
 	done
 
 	debug_log "${hash}: [${(Pkv)hash}]"
+}
+
+function add_to_hash(){
+	emulate -L zsh
+
+	local hash=${ast[${1}]} k v
+	shift
+
+	for k v in "$@"; do
+		eval "${hash}[${k}]=${(q)v}"
+	done
+}
+
+function hash_map(){
+	emulate -L zsh
+
+	local -A hash
+	hash=( "${(@Pkv)ast[${1}]}" )
+
+	Hash
+	local new_hash=$REPLY f=$2 k
+	shift 2
+
+	for k in ${(k)hash}; do
+		eval "${f%%@*} ${(q)hash[${k}]} ${(q)@}" || { REPLY=; return 1; }
+		add_to_hash "$new_hash" "$k" "$REPLY"
+	done
+
+	REPLY=$new_hash
 }
 
 function Atom(){

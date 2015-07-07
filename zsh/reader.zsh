@@ -21,13 +21,15 @@ function read_str(){
 
 	read_form || return $?
 
-	debug_log "REPLY: [$REPLY], ast[$REPLY]: [${ast[$REPLY]}], ${ast[$REPLY]}: [${(@Pkv)ast[$REPLY]}]"
+	debug_log "REPLY: [$REPLY]"
 }
 
 function tokenize(){
 	emulate -L zsh
 
 	setopt rematch_pcre # rc_quotes option doesn't work in regexp?
+
+	debug_log "args: [$*]"
 
 	local str="$*" token match
 	local -i idx
@@ -83,6 +85,8 @@ function read_form(){
 function read_symbol(){
 	emulate -L zsh
 
+	debug_log "arg: [$1]"
+
 	Symbol "$1"
 	local s=$REPLY
 
@@ -100,10 +104,14 @@ function read_symbol(){
 			List "$s" "$REPLY"
 			;;
 	esac
+
+	debug_log "REPLY: [$REPLY]"
 }
 
 function read_seq(){
 	emulate -L zsh
+
+	debug_log "args: [$@]"
 
 	local type=$1 start=$2 end=$3 items token
 
@@ -136,6 +144,8 @@ function read_seq(){
 	((read_idx++))
 
 	$type "${(@)items}"
+
+	debug_log "REPLY: [$REPLY]"
 }
 
 function read_atom(){
@@ -154,6 +164,8 @@ function read_atom(){
 		(:*)		Keyword "${token:1}";;
 		(*)			Symbol "$token";;
 	esac
+
+	debug_log "REPLY: [$REPLY]"
 }
 
 ######################################################################

@@ -58,35 +58,40 @@ typeset -r false='fals_0'
 function Symbol(){
 	emulate -L zsh
 
+	debug_log "arg: [$1]"
+
 	new_obj 'symb'
 	ast[${REPLY}]=$1
 
-	debug_log "arg: [$1]"
 	debug_log "ast[$REPLY]: [${ast[$REPLY]}]"
 }
 
 function Number(){
 	emulate -L zsh
 
+	debug_log "arg: [$1]"
+
 	new_obj 'number'
 	ast[${REPLY}]=$1
 
-	debug_log "arg: [$1]"
 	debug_log "ast[$REPLY]: [${ast[$REPLY]}]"
 }
 
 function String(){
 	emulate -L zsh
 
+	debug_log "arg: [$1]"
+
 	new_obj 'strn'
 	ast[${REPLY}]=$1
 
-	debug_log "arg: [$1]"
 	debug_log "ast[$REPLY]: [${ast[$REPLY]}]"
 }
 
 function Keyword(){
 	emulate -L zsh
+
+	debug_log "arg: [$1]"
 
 	new_obj 'strn'
 
@@ -95,12 +100,13 @@ function Keyword(){
 
 	ast[${REPLY}]=$k
 
-	debug_log "arg: [$1]"
 	debug_log "ast[$REPLY]: [${ast[$REPLY]}]"
 }
 
 function Seq(){
 	emulate -L zsh
+
+	debug_log "args: [$@]"
 
 	new_obj "$1"
 	local seq="${obj_magic}_${REPLY}"
@@ -110,18 +116,23 @@ function Seq(){
 
 	ast[${REPLY}]=$seq
 
-	debug_log "args: [$@]"
-	debug_log "ast[$REPLY]: [${ast[$REPLY]}]"
+	debug_log "ast[$REPLY]: [${ast[$REPLY]}], ${ast[$REPLY]}: [${(P)ast[$REPLY]}]"
 }
 
 function car(){
 	emulate -L zsh
 
+	debug_log "arg: [$1], ast[$1]: [${ast[$1]}], ${ast[$1]}: [${(P)ast[$1]}]"
+
 	REPLY=${${(P)ast[${1}][1]}:-$nil}
+
+	debug_log "REPLY: [$REPLY]"
 }
 
 function cdr(){
 	emulate -L zsh
+
+	debug_log "arg: [$1], ast[$1]: [${ast[$1]}], ${ast[$1]}: [${(P)ast[$1]}]"
 
 	List "${(@P)ast[${1}][2,-1]}"
 }
@@ -129,12 +140,18 @@ function cdr(){
 function add_to_seq(){
 	emulate -L zsh
 
+	debug_log "args: [$@], ast[$1]: [${ast[$1]}], ${ast[$1]}: [${(P)ast[$1]}]"
+
 	eval "${ast[${1}]}+=( ${(q)@[2,-1]} )"
 	REPLY=$1
+
+	debug_log "ast[$REPLY]: [${ast[$REPLY]}], ${ast[$REPLY]}: [${(P)ast[$REPLY]}]"
 }
 
 function map(){
 	emulate -L zsh
+
+	debug_log "args: [$@], ast[$1]: [${ast[$1]}], ${ast[$1]}: [${(P)ast[$1]}]"
 
 	Seq "${1%%_*}"
 	local new_seq=$REPLY seq=${ast[${1}]} f=$2 v
@@ -146,6 +163,8 @@ function map(){
 	done
 
 	REPLY=$new_seq
+
+	debug_log "ast[$REPLY]: [${ast[$REPLY]}], ${ast[$REPLY]}: [${(P)ast[$REPLY]}]"
 }
 
 function List(){
@@ -163,6 +182,8 @@ function Vector(){
 function Hash(){
 	emulate -L zsh
 
+	debug_log "args: [$@]"
+
 	new_obj 'hash'
 	local hash="${obj_magic}_${REPLY}" k v
 
@@ -171,29 +192,32 @@ function Hash(){
 
 	ast[${REPLY}]=$hash
 
-	debug_log "args: [$@]"
-	debug_log "ast[$REPLY]: [${ast[$REPLY]}]"
-
 	for k v in "$@"; do
 		eval "${hash}[${ast[${k}]}]=${(q)v}"
 	done
 
-	debug_log "${hash}: [${(Pkv)hash}]"
+	debug_log "ast[$REPLY]: [${ast[$REPLY]}], ${ast[$REPLY]}: [${(Pkv)ast[$REPLY]}]"
 }
 
 function add_to_hash(){
 	emulate -L zsh
 
-	local hash=${ast[${1}]} k v
+	debug_log "args: [$@], ast[$1]: [${ast[$1]}], ${ast[$1]}: [${(Pkv)ast[$1]}]"
+
+	local REPLY=$1 hash=${ast[${1}]} k v # REPLY is a local variable
 	shift
 
 	for k v in "$@"; do
 		eval "${hash}[${k}]=${(q)v}"
 	done
+
+	debug_log "ast[$REPLY]: [${ast[$REPLY]}], ${ast[$REPLY]}: [${(Pkv)ast[$REPLY]}]"
 }
 
 function hash_map(){
 	emulate -L zsh
+
+	debug_log "args: [$@], ast[$1]: [${ast[$1]}], ${ast[$1]}: [${(Pkv)ast[$1]}]"
 
 	local -A hash
 	hash=( "${(@Pkv)ast[${1}]}" )
@@ -208,15 +232,18 @@ function hash_map(){
 	done
 
 	REPLY=$new_hash
+
+	debug_log "ast[$REPLY]: [${ast[$REPLY]}], ${ast[$REPLY]}: [${(Pkv)ast[$REPLY]}]"
 }
 
 function Atom(){
 	emulate -L zsh
 
+	debug_log "arg: [$1]"
+
 	new_obj 'atom'
 	ast[${REPLY}]=$1
 
-	debug_log "arg: [$1]"
 	debug_log "ast[$REPLY]: [${ast[$REPLY]}]"
 }
 

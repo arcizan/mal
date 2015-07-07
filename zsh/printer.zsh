@@ -22,6 +22,8 @@ function pr_str(){
 	fi
 
 	${obj_type}_pr_str "$@"
+
+	debug_log "REPLY: [$REPLY]"
 }
 
 function nil_pr_str(){

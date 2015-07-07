@@ -112,7 +112,7 @@ function Seq(){
 	local seq="${obj_magic}_${REPLY}"
 
 	typeset -ag $seq
-	eval "${seq}=( ${(q)@[2,-1]} )"
+	eval "${seq}"'=( "${@[2,-1]}" )'
 
 	ast[${REPLY}]=$seq
 
@@ -137,12 +137,22 @@ function cdr(){
 	List "${(@P)ast[${1}][2,-1]}"
 }
 
+function nth(){
+	emulate -L zsh
+
+	debug_log "args: [$@], ast[$1]: [${ast[$1]}], ${ast[$1]}: [${(P)ast[$1]}]"
+
+	REPLY=${(P)ast[${1}][$(($2 + 1))]}
+
+	debug_log "REPLY: [$REPLY]"
+}
+
 function add_to_seq(){
 	emulate -L zsh
 
 	debug_log "args: [$@], ast[$1]: [${ast[$1]}], ${ast[$1]}: [${(P)ast[$1]}]"
 
-	eval "${ast[${1}]}+=( ${(q)@[2,-1]} )"
+	eval "${ast[${1}]}"'+=( "${@[2,-1]}" )'
 	REPLY=$1
 
 	debug_log "ast[$REPLY]: [${ast[$REPLY]}], ${ast[$REPLY]}: [${(P)ast[$REPLY]}]"
@@ -158,7 +168,7 @@ function map(){
 	shift 2
 
 	for v in "${(@P)seq}"; do
-		eval "${f%%@*} ${(q)v} ${(q)@}" || { REPLY=; return 1; }
+		"${f%%@*}" "$v" "$@" || { REPLY=; return 1; }
 		add_to_seq "$new_seq" "$REPLY"
 	done
 
@@ -193,10 +203,18 @@ function Hash(){
 	ast[${REPLY}]=$hash
 
 	for k v in "$@"; do
-		eval "${hash}[${ast[${k}]}]=${(q)v}"
+		eval "${hash}"'[${ast[${k}]}]=$v'
 	done
 
 	debug_log "ast[$REPLY]: [${ast[$REPLY]}], ${ast[$REPLY]}: [${(Pkv)ast[$REPLY]}]"
+}
+
+function contains(){
+	emulate -L zsh
+
+	debug_log "args: [$@], keys: [${(Pk)ast[$1]}], key: [$2]"
+
+	[[ -n "${(@MPk)ast[${1}]:#$2}" ]]
 }
 
 function add_to_hash(){
@@ -208,7 +226,7 @@ function add_to_hash(){
 	shift
 
 	for k v in "$@"; do
-		eval "${hash}[${k}]=${(q)v}"
+		eval "${hash}"'[${k}]=$v'
 	done
 
 	debug_log "ast[$REPLY]: [${ast[$REPLY]}], ${ast[$REPLY]}: [${(Pkv)ast[$REPLY]}]"
@@ -227,7 +245,7 @@ function hash_map(){
 	shift 2
 
 	for k in ${(k)hash}; do
-		eval "${f%%@*} ${(q)hash[${k}]} ${(q)@}" || { REPLY=; return 1; }
+		"${f%%@*}" "${hash[${k}]}" "$@" || { REPLY=; return 1; }
 		add_to_hash "$new_hash" "$k" "$REPLY"
 	done
 

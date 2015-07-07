@@ -11,7 +11,7 @@ function debug_log(){
 
 	[[ "$debug" == (#i)(true|on|yes|<1->) ]] || return 0
 
-	print -lr -- $@
+	print -r -- $@ >> debug.log
 }
 
 alias debug_log='debug_log ${0:t}:${LINENO}:'
